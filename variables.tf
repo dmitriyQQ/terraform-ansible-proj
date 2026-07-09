@@ -29,4 +29,14 @@ variable "lxc_passwd" {
   sensitive = true
 }
 
+variable "target_node" {
+  description = "Proxmox target node"
+  type = string
+  default = "hostname"
+}
 
+variable "ostemplate" {
+  description = "OS template"
+  type = string
+  default = "local:vztmpl/ubuntu-22.04-standard_22.04-1_amd64.tar.zst"
+}

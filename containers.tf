@@ -1,27 +1,15 @@
-resource "proxmox_lxc" "simple_container" {
+module "container" {
+  source   = "./modules/lxc_container"
   for_each = var.containers
 
-  hostname = each.value.hostname
-  target_node = "hostname"
-  ostemplate  = "local:vztmpl/ubuntu-22.04-standard_22.04-1_amd64.tar.zst"
+  hostname    = each.value.hostname
+  ip          = each.value.ip
+  memory      = each.value.memory
+  swap        = each.value.swap
+  disk_size   = each.value.disk_size
+  cores       = each.value.cores
+
+  target_node = var.target_node
+  ostemplate  = var.ostemplate
   password    = var.lxc_passwd
-
-  cores  = each.value.cores
-  memory = each.value.memory
-  swap   = each.value.swap
-  
-  rootfs {
-    storage = "local-lvm"
-    size    = each.value.disk_size
-  }
-
-  network {
-    name = "eth0"
-    bridge = "vmbr0"
-    ip = each.value.ip
-    gw = "192.168.0.1"
-  }
-
-
-start = true
 }
