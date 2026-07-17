@@ -1,0 +1,17 @@
+proxmox_api_url = ""
+proxmox_api_id = ""
+proxmox_api_secret = ""
+lxc_passwd = ""
+containers = {
+  db = {
+    hostname  = ""
+    
+    profile   = ""
+  
+    network = {
+      eth0 = {
+        ip        = ""
+      }
+    }
+  }
+}

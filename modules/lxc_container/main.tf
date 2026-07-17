@@ -1,23 +1,26 @@
 resource "proxmox_lxc" "this" {
-  hostname = var.hostname
-  target_node = var.target_node
-  ostemplate = var.ostemplate
-  password = var.password
+  hostname    = var.hostname
+  target_node = var.platform.target_node
+  ostemplate  = var.platform.ostemplate
+  password    = var.password
 
-  cores = var.cores
-  memory = var.memory
-  swap = var.swap
+  cores  = var.resources.cores
+  memory = var.resources.memory
+  swap   = var.resources.swap
 
   rootfs {
-    storage = var.storage
-    size = var.disk_size
+    storage = var.platform.storage
+    size    = var.storage["root"].size
   }
 
-  network {
-    name = "eth0"
-    bridge = var.bridge
-    ip = var.ip
-    gw = var.gw
+  dynamic "network" {
+    for_each = var.network
+    content {
+      name   = network.key
+      bridge = network.value.bridge
+      ip     = network.value.ip
+      gw     = network.value.gateway
+    }
   }
   start = true
 }

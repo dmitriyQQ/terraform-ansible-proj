@@ -3,19 +3,13 @@ variable "hostname" {
   type        = string
 }
 
-variable "ip" {
-  description = "ip address"
-  type        = string
-}
-
-variable "target_node" {
-  description = "Proxmox node name"
-  type        = string
-}
-
-variable "ostemplate" {
-  description = "OS template path"
-  type        = string
+variable "platform" {
+  description = "platform settings"
+  type = object({
+    target_node = string
+    ostemplate  = string
+    storage = optional(string, "local-lvm")
+  })
 }
 
 variable "password" {
@@ -24,44 +18,27 @@ variable "password" {
   sensitive   = true
 }
 
-variable "memory" {
-  description = "RAM"
-  type        = number
-  default     = 2048
+variable "network" {
+  description = "Network variables"
+  type = map(object({
+    ip      = string
+    bridge  = optional(string, "vmbr0")
+    gateway = optional(string, "192.168.0.1")
+  }))
 }
 
-variable "swap" {
-  description = "swap in memory"
-  type        = number
-  default     = 512
-}
-
-variable "disk_size" {
-  description = "disk size"
-  type        = string
-  default     = "2G"
-}
-
-variable "cores" {
-  description = "CPU cores"
-  type        = number
-  default     = 1
-}
-
-variable "bridge" {
-  description = "Network bridge"
-  type        = string
-  default     = "vmbr0"
-}
-
-variable "gw" {
-  description = "gateway"
-  type        = string
-  default     = "192.168.0.1"
+variable "resources" {
+  description = "Resources variables"
+  type = object({
+    memory = optional(number, 2048)
+    swap   = optional(number, 512)
+    cores  = optional(number, 1)
+  })
 }
 
 variable "storage" {
-  description = "Proxmox storage"
-  type        = string
-  default     = "local-lvm"
+  description = "Storage variables"
+  type = map(object({
+    size = string
+  }))
 }

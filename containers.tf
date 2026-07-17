@@ -1,15 +1,12 @@
 module "container" {
   source   = "./modules/lxc_container"
-  for_each = var.containers
+  for_each = local.containers
 
-  hostname    = each.value.hostname
-  ip          = each.value.ip
-  memory      = each.value.memory
-  swap        = each.value.swap
-  disk_size   = each.value.disk_size
-  cores       = each.value.cores
+  hostname  = each.value.hostname
+  network   = each.value.network
+  resources = each.value.resources
+  storage   = each.value.storage
 
-  target_node = var.target_node
-  ostemplate  = var.ostemplate
-  password    = var.lxc_passwd
+  platform = local.platform
+  password = var.lxc_passwd
 }
