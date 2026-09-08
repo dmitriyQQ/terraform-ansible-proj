@@ -1,0 +1,14 @@
+[Unit]
+Description=notes-app Unit
+After=network-online.target
+
+[Service]
+User=root
+Group=root
+[Service]
+WorkingDirectory=/opt/notes-app
+ExecStart=/opt/notes-app/venv/bin/python /opt/notes-app/app.py
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

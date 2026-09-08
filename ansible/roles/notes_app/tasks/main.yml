@@ -1,0 +1,59 @@
+---
+- name: Install python, pip and venv
+  ansible.builtin.apt:
+    name: 
+      - python3
+      - python3-pip
+      - python3-venv
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  
+- name: Create directory for app
+  ansible.builtin.file:
+    path: /opt/notes-app
+    state: directory
+    owner: root
+    group: root
+    mode: "0750"
+
+- name: Install app python depeencies
+  ansible.builtin.pip:
+    name: 
+      - flask
+      - psycopg2-binary
+      - python-dotenv
+    state: present
+    virtualenv: /opt/notes-app/venv
+    virtualenv_command: "python3 -m venv"
+
+- name: Copy app files
+  ansible.builtin.copy:
+    src: app/
+    dest: /opt/notes-app/
+  notify: Restart notes-app
+
+- name: Deploy app environment
+  ansible.builtin.template:
+    src: env.j2
+    dest: /opt/notes-app/.env
+    owner: root
+    group: root
+    mode: "0600"
+  notify: Restart notes-app
+  
+- name: Copy unit file
+  ansible.builtin.copy:
+    src: notes-app.service
+    dest: /etc/systemd/system/notes-app.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart notes-app
+
+- name: Enable and start notes-app
+  ansible.builtin.systemd_service:
+    name: notes-app
+    enabled: true
+    state: started
+    daemon_reload: true

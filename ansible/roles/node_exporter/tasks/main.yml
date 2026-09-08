@@ -1,0 +1,57 @@
+---
+- name: Create node_exporter user
+  ansible.builtin.user:
+    create_home: false
+    name: node_exporter
+    shell: /usr/sbin/nologin
+    system: true
+    state: present
+
+- name: Download node_exporter archive on Ansible controller
+  ansible.builtin.get_url:
+    url: https://github.com/prometheus/node_exporter/releases/download/v1.10.2/node_exporter-1.10.2.linux-amd64.tar.gz
+    dest: /tmp/node_exporter-1.10.2.linux-amd64.tar.gz
+    checksum: "sha256:c46e5b6f53948477ff3a19d97c58307394a29fe64a01905646f026ddc32cb65b"
+    mode: "0644"
+  delegate_to: localhost
+  run_once: true
+  become: false
+
+- name: Copy node_exporter archive to containers
+  ansible.builtin.copy:
+    src: /tmp/node_exporter-1.10.2.linux-amd64.tar.gz
+    dest: /tmp/node_exporter-1.10.2.linux-amd64.tar.gz
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Unarchive tar to dest folder
+  ansible.builtin.unarchive:
+    src: /tmp/node_exporter-1.10.2.linux-amd64.tar.gz
+    remote_src: true
+    dest: /tmp
+
+- name: Install node_exporter binary
+  ansible.builtin.copy:
+    src: /tmp/node_exporter-1.10.2.linux-amd64/node_exporter
+    dest: /usr/local/bin/node_exporter
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Copy unit file
+  ansible.builtin.copy:
+    src: node_exporter.service
+    dest: /etc/systemd/system/node_exporter.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart node_exporter
+
+- name: Enable and start node_exporter
+  ansible.builtin.systemd_service:
+    name: node_exporter
+    enabled: true
+    state: started
+    daemon_reload: true

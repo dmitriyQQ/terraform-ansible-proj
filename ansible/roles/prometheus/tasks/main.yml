@@ -1,0 +1,81 @@
+---
+- name: Create prometheus user
+  ansible.builtin.user:
+    create_home: false
+    name: prometheus
+    shell: /usr/sbin/nologin
+    system: true
+    state: present
+
+- name: Download prometheus archive
+  ansible.builtin.get_url:
+    url: https://github.com/prometheus/prometheus/releases/download/v3.14.0/prometheus-3.14.0.linux-amd64.tar.gz
+    dest: /tmp/prometheus-3.14.0.linux-amd64.tar.gz
+    mode: "0644"
+  delegate_to: localhost
+  run_once: true
+  become: false
+
+- name: Copy prometheus archive to containers
+  ansible.builtin.copy:
+    src: /tmp/prometheus-3.14.0.linux-amd64.tar.gz
+    dest: /tmp/prometheus-3.14.0.linux-amd64.tar.gz
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Unarchive tar to dest folder
+  ansible.builtin.unarchive:
+    src: /tmp/prometheus-3.14.0.linux-amd64.tar.gz
+    remote_src: true
+    dest: /tmp
+
+- name: Install prometheus binary
+  ansible.builtin.copy:
+    src: /tmp/prometheus-3.14.0.linux-amd64/prometheus
+    dest: /usr/local/bin/prometheus
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Create directory for prometheus config
+  ansible.builtin.file:
+    path: /etc/prometheus
+    state: directory
+    owner: root
+    group: prometheus
+    mode: "0750"
+
+- name: Create directory for prometheus TSDB
+  ansible.builtin.file:
+    path: /var/lib/prometheus
+    state: directory
+    owner: prometheus
+    group: prometheus
+    mode: "0755"
+
+- name: Generate prometheus.yml
+  ansible.builtin.template:
+    src: prometheus.yml.j2
+    dest: /etc/prometheus/prometheus.yml
+    owner: root
+    group: prometheus
+    mode: "0640"
+  notify: Restart prometheus
+
+- name: Copy unit file
+  ansible.builtin.copy:
+    src: prometheus.service
+    dest: /etc/systemd/system/prometheus.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart prometheus
+
+- name: Enable and start prometheus
+  ansible.builtin.systemd_service:
+    name: prometheus
+    enabled: true
+    state: started
+    daemon_reload: true

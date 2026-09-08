@@ -1,0 +1,39 @@
+---
+- name: Update cache and install nginx
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Copy notes-app nginx config
+  ansible.builtin.copy:
+    src: notes-app
+    dest: /etc/nginx/sites-available/notes-app
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload nginx
+
+- name: Enable site from symlink
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/notes-app
+    src: /etc/nginx/sites-available/notes-app
+    state: link
+  notify: Reload nginx
+
+- name: Disable default site
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: Reload nginx
+
+- name: Check nginx -t
+  ansible.builtin.command: nginx -t
+  changed_when: false
+
+- name: Start and enable nginx
+  ansible.builtin.systemd_service:
+    name: nginx
+    state: started
+    enabled: true

@@ -1,0 +1,64 @@
+---
+- name: Install python
+  ansible.builtin.apt:
+    name: python3-debian
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Add Grafana repository
+  ansible.builtin.deb822_repository:
+    name: grafana
+    types: deb
+    uris: https://apt.grafana.com
+    suites: stable
+    components: main
+    signed_by: https://apt.grafana.com/gpg.key
+    state: present
+    
+- name: Install grafana
+  ansible.builtin.apt:
+    update_cache: true
+    name: grafana
+    state: present    
+
+- name: Enable and start grafana
+  ansible.builtin.systemd_service:
+    name: grafana-server
+    enabled: true
+    state: started
+
+- name: Copy prometheus datasource
+  ansible.builtin.copy:
+    src: prometheus.yml
+    dest: /etc/grafana/provisioning/datasources/prometheus.yml
+    owner: root
+    group: grafana
+    mode: "0640"
+  notify: Restart grafana
+
+- name: Create directory for dashboards
+  ansible.builtin.file:
+    path: "/var/lib/grafana/dashboards"
+    state: directory
+    owner: root
+    group: grafana
+    mode: "0750"
+
+- name: Copy provider file
+  ansible.builtin.copy:
+    src: dashboards.yml
+    dest: /etc/grafana/provisioning/dashboards/dashboards.yml
+    owner: root
+    group: grafana
+    mode: "0640"
+  notify: Restart grafana
+
+- name: Copy grafana dashboard
+  ansible.builtin.copy:
+    src: 1860_rev45.json
+    dest: /var/lib/grafana/dashboards/1860_rev45.json
+    owner: root
+    group: grafana
+    mode: "0640"
+  notify: Restart grafana

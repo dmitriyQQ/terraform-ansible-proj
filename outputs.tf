@@ -3,8 +3,8 @@ output "containers_info" {
   value = {
     for key, value in module.container :
     key => {
-      hostname = value.hostname
-      ip       = value.ip
+      ip     = split("/", value.ip)[0]
+      groups = local.containers[key].groups
     }
   }
 }

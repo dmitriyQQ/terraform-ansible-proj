@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Notes</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+</head>
+<body>
+
+    <h1>Notes</h1>
+
+    <form method="POST">
+        <div>
+            <label for="title">Заголовок:</label>
+            <input
+                type="text"
+                id="title"
+                name="title"
+                required
+            >
+        </div>
+
+        <br>
+
+        <div>
+            <label for="content">Текст:</label>
+            <textarea
+                id="content"
+                name="content"
+                required
+            ></textarea>
+        </div>
+
+        <br>
+
+        <button type="submit">Добавить заметку</button>
+    </form>
+
+    <hr>
+
+    <h2>Список заметок</h2>
+
+    {% for note in notes %}
+        <article>
+            <h3>{{ note[1] }}</h3>
+
+            <p>{{ note[2] }}</p>
+
+            <small>
+                ID: {{ note[0] }} |
+                Created: {{ note[3].strftime('%Y-%m-%d %H:%M:%S') }}
+            </small>
+
+            <br><br>
+
+            <a href="{{ url_for('edit_note', note_id=note[0]) }}">
+                Редактировать
+            </a>
+
+            <form
+                method="POST"
+                action="{{ url_for('delete_note', note_id=note[0]) }}"
+            >
+                <button type="submit">Удалить</button>
+            </form>
+        </article>
+
+        <hr>
+    {% else %}
+        <p>Заметок пока нет.</p>
+    {% endfor %}
+
+</body>
+</html>

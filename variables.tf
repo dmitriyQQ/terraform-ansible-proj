@@ -1,8 +1,6 @@
 variable "containers" {
   description = "map of containers"
   type = map(object({
-    hostname = string
-
     profile = optional(string)
 
     network = map(object({
@@ -20,6 +18,9 @@ variable "containers" {
     storage = optional(map(object({
       size = string
     })))
+
+    groups = list(string)
+
   }))
 
   default = {}
@@ -113,4 +114,9 @@ variable "storage" {
   description = "Proxmox storage"
   type        = string
   default     = "local-lvm"
+}
+
+variable "ssh_public_key" {
+  description = "Path to ssh public key"
+  type        = string
 }

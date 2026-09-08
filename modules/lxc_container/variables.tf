@@ -3,12 +3,17 @@ variable "hostname" {
   type        = string
 }
 
+variable "ssh_public_key" {
+  description = "Path to ssh public key"
+  type        = string
+}
+
 variable "platform" {
   description = "platform settings"
   type = object({
     target_node = string
     ostemplate  = string
-    storage = optional(string, "local-lvm")
+    storage     = optional(string, "local-lvm")
   })
 }
 
@@ -22,8 +27,8 @@ variable "network" {
   description = "Network variables"
   type = map(object({
     ip      = string
-    bridge  = optional(string, "vmbr0")
-    gateway = optional(string, "192.168.0.1")
+    bridge  = optional(string, "vmbr1")
+    gateway = optional(string, "192.168.100.2")
   }))
 }
 

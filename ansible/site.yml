@@ -1,0 +1,36 @@
+---
+- name: Configure node exporter
+  hosts: containers
+  become: true
+
+  roles:
+    - node_exporter
+
+- name: Configure web-app servers
+  hosts: web
+  become: true
+
+  vars_files:
+    - secrets.yml
+
+  roles:
+    - nginx
+    - notes_app
+
+- name: Configure monitoring servers
+  hosts: monitoring
+  become: true
+
+  roles: 
+    - prometheus
+    - grafana
+
+- name: Configure database sevres
+  hosts: db
+  become: true
+
+  vars_files:
+    - secrets.yml
+  
+  roles: 
+    - postgres

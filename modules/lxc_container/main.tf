@@ -1,8 +1,9 @@
 resource "proxmox_lxc" "this" {
-  hostname    = var.hostname
-  target_node = var.platform.target_node
-  ostemplate  = var.platform.ostemplate
-  password    = var.password
+  hostname        = var.hostname
+  target_node     = var.platform.target_node
+  ostemplate      = var.platform.ostemplate
+  password        = var.password
+  ssh_public_keys = var.ssh_public_key
 
   cores  = var.resources.cores
   memory = var.resources.memory

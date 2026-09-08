@@ -1,0 +1,14 @@
+[Unit]
+Description=Prometheus Unit
+After=network-online.target
+
+[Service]
+User=prometheus
+Group=prometheus
+ExecStart=/usr/local/bin/prometheus \
+  --config.file=/etc/prometheus/prometheus.yml \
+  --storage.tsdb.path=/var/lib/prometheus
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

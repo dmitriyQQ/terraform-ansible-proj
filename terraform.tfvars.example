@@ -2,6 +2,7 @@ proxmox_api_url = ""
 proxmox_api_id = ""
 proxmox_api_secret = ""
 lxc_passwd = ""
+ssh_public_key = ""
 containers = {
   db = {
     hostname  = ""

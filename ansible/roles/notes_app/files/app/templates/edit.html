@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Редактирование заметки</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+</head>
+<body>
+
+    <h1>Редактирование заметки</h1>
+
+    <form method="POST">
+        <div>
+            <label for="title">Заголовок:</label>
+
+            <input
+                type="text"
+                id="title"
+                name="title"
+                value="{{ note[1] }}"
+                required
+            >
+        </div>
+
+        <br>
+
+        <div>
+            <label for="content">Текст:</label>
+
+            <textarea
+                id="content"
+                name="content"
+                required
+            >{{ note[2] }}</textarea>
+        </div>
+
+        <br>
+
+        <button type="submit">Сохранить</button>
+    </form>
+
+    <br>
+
+    <a href="/">Назад</a>
+
+</body>
+</html>
