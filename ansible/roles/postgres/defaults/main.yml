@@ -1,0 +1,4 @@
+---
+postgresql_hba_path: /etc/postgresql/14/main/pg_hba.conf
+postgresql_db_name: notes
+postgresql_db_user: notes_user

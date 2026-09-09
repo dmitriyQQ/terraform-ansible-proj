@@ -3,38 +3,48 @@
   ansible.builtin.user:
     create_home: false
     name: node_exporter
-    shell: /usr/sbin/nologin
+    shell: "/usr/sbin/nologin"
     system: true
     state: present
 
+- name: Check if node_exporter binary exists
+  ansible.builtin.stat:
+    path: /usr/local/bin/node_exporter
+  register: node_exporter_binary
+
 - name: Download node_exporter archive on Ansible controller
   ansible.builtin.get_url:
-    url: https://github.com/prometheus/node_exporter/releases/download/v1.10.2/node_exporter-1.10.2.linux-amd64.tar.gz
-    dest: /tmp/node_exporter-1.10.2.linux-amd64.tar.gz
-    checksum: "sha256:c46e5b6f53948477ff3a19d97c58307394a29fe64a01905646f026ddc32cb65b"
+    url: "{{ node_exporter_download_url }}"
+    dest: "/tmp/{{ node_exporter_archive_name }}"
+    checksum: "sha256:{{ node_exporter_checksum }}"
+    timeout: 60
     mode: "0644"
+  register: node_exporter_download
+  retries: 3
+  delay: 5
+  until: node_exporter_download is succeeded
   delegate_to: localhost
   run_once: true
   become: false
 
 - name: Copy node_exporter archive to containers
   ansible.builtin.copy:
-    src: /tmp/node_exporter-1.10.2.linux-amd64.tar.gz
-    dest: /tmp/node_exporter-1.10.2.linux-amd64.tar.gz
+    src: "/tmp/{{ node_exporter_archive_name }}"
+    dest: "/tmp/{{ node_exporter_archive_name }}"
     owner: root
     group: root
     mode: "0644"
 
 - name: Unarchive tar to dest folder
   ansible.builtin.unarchive:
-    src: /tmp/node_exporter-1.10.2.linux-amd64.tar.gz
+    src: "/tmp/{{ node_exporter_archive_name }}"
     remote_src: true
-    dest: /tmp
+    dest: "/tmp"
 
 - name: Install node_exporter binary
   ansible.builtin.copy:
-    src: /tmp/node_exporter-1.10.2.linux-amd64/node_exporter
-    dest: /usr/local/bin/node_exporter
+    src: "/tmp/{{ node_exporter_archive_dir }}/node_exporter"
+    dest: "/usr/local/bin/node_exporter"
     remote_src: true
     owner: root
     group: root
@@ -43,7 +53,7 @@
 - name: Copy unit file
   ansible.builtin.copy:
     src: node_exporter.service
-    dest: /etc/systemd/system/node_exporter.service
+    dest: "/etc/systemd/system/node_exporter.service"
     owner: root
     group: root
     mode: "0644"

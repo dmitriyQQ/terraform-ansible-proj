@@ -10,7 +10,7 @@
 
 - name: Create notes user
   community.postgresql.postgresql_user:
-    name: notes_user
+    name: "{{ postgresql_db_user }}"
     password: "{{ db_user_passwd }}"
     state: present
   become: true
@@ -18,9 +18,9 @@
 
 - name: Create database
   community.postgresql.postgresql_db:
-    name: notes
+    name: "{{ postgresql_db_name }}"
     state: present
-    owner: notes_user
+    owner: "{{ postgresql_db_user }}"
     encoding: UTF-8
     template: template0
   become: true
@@ -36,14 +36,14 @@
       - content text
       - created_at timestamp default CURRENT_TIMESTAMP
     login_host: 127.0.0.1
-    login_db: notes
-    login_user: notes_user
+    login_db: "{{ postgresql_db_name }}"
+    login_user: "{{ postgresql_db_user }}"
     login_password: "{{ db_user_passwd }}"
 
-- name: Change PostgreSQL server configs
-  community.postgresql.postgresql_set:
-    name: listen_addresses
-    value: localhost,192.168.100.11
+- name: Configure PostgreSQL listen addresses
+  community.postgresql.postgresql_alter_system:
+    param: listen_addresses
+    value: "localhost,{{ ansible_host }}"
   become: true
   become_user: postgres
   notify: Restart postgresql
@@ -51,11 +51,11 @@
 - name: Change rules in pg_hba.conf
   community.postgresql.postgresql_pg_hba:
     contype: host
-    databases: notes
-    users: notes_user
-    address: 192.168.100.10/32
+    databases: "{{ postgresql_db_name }}"
+    users: "{{ postgresql_db_user }}"
+    address: "{{ hostvars[groups['web'][0]]['ansible_host'] }}/32"
     method: scram-sha-256
-    dest: /etc/postgresql/14/main/pg_hba.conf
+    dest: "{{ postgresql_hba_path }}"
     state: present
   notify: Reload postgresql
 
@@ -64,4 +64,3 @@
     name: postgresql
     enabled: true
     state: started
-    daemon_reload: true
