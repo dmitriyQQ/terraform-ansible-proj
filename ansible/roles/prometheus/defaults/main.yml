@@ -1,0 +1,6 @@
+---
+prometheus_version: "3.14.0"
+prometheus_archive_name: "prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
+prometheus_archive_dir: "prometheus-{{ prometheus_version }}.linux-amd64"
+prometheus_download_url: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/{{ prometheus_archive_name }}"
+prometheus_checksum: "f665c6da19eb7ba399c915d30c7d9793c9b417bf8a749b504bc470678631478d"

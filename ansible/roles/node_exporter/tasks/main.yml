@@ -9,8 +9,15 @@
 
 - name: Check if node_exporter binary exists
   ansible.builtin.stat:
-    path: /usr/local/bin/node_exporter
+    path: "/usr/local/bin/node_exporter"
   register: node_exporter_binary
+
+- name: Check installed node_exporter version
+  ansible.builtin.command:
+    cmd: /usr/local/bin/node_exporter --version
+  register: node_exporter_installed_version
+  changed_when: false
+  when: node_exporter_binary.stat.exists
 
 - name: Download node_exporter archive on Ansible controller
   ansible.builtin.get_url:
@@ -27,28 +34,45 @@
   run_once: true
   become: false
 
-- name: Copy node_exporter archive to containers
-  ansible.builtin.copy:
-    src: "/tmp/{{ node_exporter_archive_name }}"
-    dest: "/tmp/{{ node_exporter_archive_name }}"
-    owner: root
-    group: root
-    mode: "0644"
+- name: Install node_exporter when required
+  block:
+    - name: Copy node_exporter archive to containers
+      ansible.builtin.copy:
+        src: "/tmp/{{ node_exporter_archive_name }}"
+        dest: "/tmp/{{ node_exporter_archive_name }}"
+        owner: root
+        group: root
+        mode: "0644"
+    
+    - name: Unarchive tar to dest folder
+      ansible.builtin.unarchive:
+        src: "/tmp/{{ node_exporter_archive_name }}"
+        remote_src: true
+        dest: "/tmp"
 
-- name: Unarchive tar to dest folder
-  ansible.builtin.unarchive:
-    src: "/tmp/{{ node_exporter_archive_name }}"
-    remote_src: true
-    dest: "/tmp"
+    - name: Install node_exporter binary
+      ansible.builtin.copy:
+        src: "/tmp/{{ node_exporter_archive_dir }}/node_exporter"
+        dest: "/usr/local/bin/node_exporter"
+        remote_src: true
+        owner: root
+        group: root
+        mode: "0755"
+      notify: Restart node_exporter  
 
-- name: Install node_exporter binary
-  ansible.builtin.copy:
-    src: "/tmp/{{ node_exporter_archive_dir }}/node_exporter"
-    dest: "/usr/local/bin/node_exporter"
-    remote_src: true
-    owner: root
-    group: root
-    mode: "0755"
+    - name: Remove node_exporter archive from container
+      ansible.builtin.file:
+        path: "/tmp/{{ node_exporter_archive_name }}"
+        state: absent
+    
+    - name: Remove extracted node_exporter directory
+      ansible.builtin.file:
+        path: "/tmp/{{ node_exporter_archive_dir }}"
+        state: absent
+    
+  when:
+    - not node_exporter_binary.stat.exists or
+      node_exporter_version not in (node_exporter_installed_version.stdout | default(''))
 
 - name: Copy unit file
   ansible.builtin.copy:

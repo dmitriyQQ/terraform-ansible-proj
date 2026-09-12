@@ -3,9 +3,8 @@ Description=notes-app Unit
 After=network-online.target
 
 [Service]
-User=root
-Group=root
-[Service]
+User=notes-app
+Group=notes-app
 WorkingDirectory=/opt/notes-app
 ExecStart=/opt/notes-app/venv/bin/python /opt/notes-app/app.py
 Restart=on-failure

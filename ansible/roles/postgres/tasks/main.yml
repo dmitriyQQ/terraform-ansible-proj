@@ -43,7 +43,7 @@
 - name: Configure PostgreSQL listen addresses
   community.postgresql.postgresql_alter_system:
     param: listen_addresses
-    value: "localhost,{{ ansible_host }}"
+    value: "localhost, {{ ansible_host }}"
   become: true
   become_user: postgres
   notify: Restart postgresql

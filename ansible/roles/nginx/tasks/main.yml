@@ -8,8 +8,8 @@
 
 - name: Copy notes-app nginx config
   ansible.builtin.copy:
-    src: notes-app
-    dest: /etc/nginx/sites-available/notes-app
+    src: "{{ nginx_site_name }}"
+    dest: "/etc/nginx/sites-available/{{ nginx_site_name }}"
     owner: root
     group: root
     mode: "0644"
@@ -17,14 +17,14 @@
 
 - name: Enable site from symlink
   ansible.builtin.file:
-    path: /etc/nginx/sites-enabled/notes-app
-    src: /etc/nginx/sites-available/notes-app
+    path: "/etc/nginx/sites-enabled/{{ nginx_site_name }}"
+    src: "/etc/nginx/sites-available/{{ nginx_site_name }}"
     state: link
   notify: Reload nginx
 
 - name: Disable default site
   ansible.builtin.file:
-    path: /etc/nginx/sites-enabled/default
+    path: "/etc/nginx/sites-enabled/default"
     state: absent
   notify: Reload nginx
 

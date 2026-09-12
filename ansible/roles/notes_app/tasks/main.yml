@@ -1,4 +1,12 @@
 ---
+- name: Create notes-app user
+  ansible.builtin.user:
+    create_home: false
+    name: notes-app
+    shell: "/usr/sbin/nologin"
+    system: true
+    state: present
+
 - name: Install python, pip and venv
   ansible.builtin.apt:
     name: 
@@ -11,10 +19,10 @@
   
 - name: Create directory for app
   ansible.builtin.file:
-    path: /opt/notes-app
+    path: "/opt/notes-app"
     state: directory
     owner: root
-    group: root
+    group: notes-app
     mode: "0750"
 
 - name: Install app python depeencies
@@ -24,28 +32,30 @@
       - psycopg2-binary
       - python-dotenv
     state: present
-    virtualenv: /opt/notes-app/venv
+    virtualenv: "/opt/notes-app/venv"
     virtualenv_command: "python3 -m venv"
 
 - name: Copy app files
   ansible.builtin.copy:
-    src: app/
-    dest: /opt/notes-app/
+    src: "app/"
+    dest: "/opt/notes-app/"
+    owner: root
+    group: notes-app
   notify: Restart notes-app
 
 - name: Deploy app environment
   ansible.builtin.template:
     src: env.j2
-    dest: /opt/notes-app/.env
+    dest: "/opt/notes-app/.env"
     owner: root
-    group: root
-    mode: "0600"
+    group: notes-app
+    mode: "0640"
   notify: Restart notes-app
   
 - name: Copy unit file
   ansible.builtin.copy:
     src: notes-app.service
-    dest: /etc/systemd/system/notes-app.service
+    dest: "/etc/systemd/system/notes-app.service"
     owner: root
     group: root
     mode: "0644"
