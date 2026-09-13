@@ -120,3 +120,8 @@ variable "ssh_public_key" {
   description = "Path to ssh public key"
   type        = string
 }
+
+variable "proxmox_ssh_host" {
+  description = "Address proxmox-host for Ansible ProxyJump"
+  type        = string
+}

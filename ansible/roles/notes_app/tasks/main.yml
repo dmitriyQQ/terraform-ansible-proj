@@ -25,22 +25,20 @@
     group: notes-app
     mode: "0750"
 
-- name: Install app python depeencies
-  ansible.builtin.pip:
-    name: 
-      - flask
-      - psycopg2-binary
-      - python-dotenv
-    state: present
-    virtualenv: "/opt/notes-app/venv"
-    virtualenv_command: "python3 -m venv"
-
 - name: Copy app files
   ansible.builtin.copy:
     src: "app/"
     dest: "/opt/notes-app/"
     owner: root
     group: notes-app
+  notify: Restart notes-app
+
+- name: Install app python depeencies from requirements.txt
+  ansible.builtin.pip:
+    requirements: "/opt/notes-app/requirements.txt"
+    state: present
+    virtualenv: "/opt/notes-app/venv"
+    virtualenv_command: "python3 -m venv"
   notify: Restart notes-app
 
 - name: Deploy app environment

@@ -8,3 +8,11 @@ output "containers_info" {
     }
   }
 }
+
+output "proxmox_ssh_host" {
+
+  description = "Address proxmox-host for Ansible ProxyJump" 
+
+  value = var.proxmox_ssh_host
+
+}
