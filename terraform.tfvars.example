@@ -5,14 +5,15 @@ lxc_passwd = ""
 ssh_public_key = ""
 containers = {
   db = {
-    hostname  = ""
-    
-    profile   = ""
+    profile = "small"
   
     network = {
       eth0 = {
         ip        = ""
       }
     }
+    groups = [
+      ""
+    ]
   }
 }

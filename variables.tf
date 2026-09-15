@@ -67,11 +67,23 @@ variable "containers" {
       ? [true]
       : [
         for _, disk in value.storage :
-        can(regex("^[0-9]+G$", disk.size))
+        can(regex("^[1-9][0-9]*G$", disk.size))
       ]
     ]))
 
     error_message = "Disk size must be in format: <number>G (e.g. 2G, 8G, 32G)."
+  }
+
+  validation {
+    condition = alltrue([
+      for _, value in var.containers :
+      value.profile != null || (
+        value.storage != null &&
+        contains(keys(value.storage), "root")
+      )
+    ])
+
+    error_message = "Each container must have either a profile or root storage configured."
   }
 }
 
@@ -118,5 +130,10 @@ variable "storage" {
 
 variable "ssh_public_key" {
   description = "Path to ssh public key"
+  type        = string
+}
+
+variable "proxmox_ssh_host" {
+  description = "Address proxmox-host for Ansible ProxyJump"
   type        = string
 }

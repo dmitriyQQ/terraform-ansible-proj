@@ -11,13 +11,12 @@ terraform_dir = Path(__file__).resolve().parents[2]
 
 
 # Выполняем:
-# terraform output -json containers_info
+# terraform output -json
 result = subprocess.run(
     [
         "terraform",
         "output",
         "-json",
-        "containers_info",
     ],
     cwd=terraform_dir,
     capture_output=True,
@@ -27,8 +26,10 @@ result = subprocess.run(
 
 
 # Преобразуем JSON-строку Terraform в словарь Python.
-containers = json.loads(result.stdout)
+tf_output = json.loads(result.stdout)
 
+proxmox_ip = tf_output["proxmox_ssh_host"]["value"]
+containers_info = tf_output["containers_info"]["value"]
 
 # Начальная структура inventory.
 inventory = {
@@ -37,16 +38,15 @@ inventory = {
     },
 }
 
-
 # Перебираем все контейнеры из Terraform output.
-for hostname, container in containers.items():
+for hostname, container in containers_info.items():
 
     # Добавляем параметры подключения для конкретного хоста.
     inventory["_meta"]["hostvars"][hostname] = {
         "ansible_host": container["ip"],
         "ansible_user": "root",
         "ansible_ssh_common_args": (
-            "-o ProxyJump=root@192.168.122.100"
+            f"-o ProxyJump=root@{proxmox_ip}"
         ),
     }
 
