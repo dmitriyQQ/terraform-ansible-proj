@@ -6,17 +6,18 @@ Terraform создаёт LXC-контейнеры в Proxmox, а Ansible под�
 
 В проекте используются:
 
-- Terraform
-- Proxmox VE
-- LXC
-- Ansible
-- Nginx
-- Flask
-- PostgreSQL
-- Prometheus
-- Grafana
-- Node Exporter
-- Ansible Vault
+* Terraform
+* Proxmox VE
+* LXC
+* Ansible
+* Python
+* Nginx
+* Flask
+* PostgreSQL
+* Prometheus
+* Grafana
+* Node Exporter
+* Ansible Vault
 
 ---
 
@@ -49,7 +50,7 @@ Terraform
 terraform output
     │
     ▼
-dynamic_inventory.py
+terraform_inventory.py
     │
     ▼
 Ansible
@@ -59,15 +60,15 @@ Ansible подключается к контейнерам через Proxmox с
 
 ---
 
-## Что разворачивается
+# Что разворачивается
 
-### web-01
+## web-01
 
 На web-контейнер устанавливаются:
 
-- Nginx
-- Flask-приложение для заметок
-- Node Exporter
+* Nginx
+* Flask-приложение для заметок
+* Node Exporter
 
 Nginx принимает HTTP-запросы и передаёт их Flask-приложению:
 
@@ -81,53 +82,62 @@ Nginx :80
 Flask 127.0.0.1:5000
 ```
 
-Само Flask-приложение слушает только `127.0.0.1:5000`.
+Само Flask-приложение слушает только:
+
+```text
+127.0.0.1:5000
+```
 
 Приложение позволяет:
 
-- создавать заметки;
-- просматривать заметки;
-- редактировать заметки;
-- удалять заметки.
+* создавать заметки;
+* просматривать заметки;
+* редактировать заметки;
+* удалять заметки.
 
 Данные хранятся в PostgreSQL.
 
 ---
 
-### db-01
+## db-01
 
 На контейнер с базой данных устанавливается PostgreSQL.
 
 Ansible:
 
-- устанавливает PostgreSQL;
-- создаёт пользователя;
-- создаёт базу данных;
-- создаёт таблицу `notes`;
-- настраивает доступ к PostgreSQL;
-- разрешает подключение с web-контейнера.
+* устанавливает PostgreSQL;
+* создаёт пользователя базы данных;
+* создаёт базу данных;
+* создаёт таблицу `notes`;
+* настраивает `listen_addresses`;
+* настраивает `pg_hba.conf`;
+* разрешает подключение с web-контейнера;
+* запускает и включает PostgreSQL через systemd.
 
 Пароль пользователя базы данных хранится в Ansible Vault.
 
 ---
 
-### monitoring-01
+## monitoring-01
 
 На monitoring-контейнер устанавливаются:
 
-- Prometheus
-- Grafana
-- Node Exporter
+* Prometheus
+* Grafana
+* Node Exporter
 
 Prometheus собирает метрики с Node Exporter, установленных на контейнерах.
 
 Grafana использует Prometheus как источник данных.
 
-Также Ansible автоматически добавляет dashboard для просмотра метрик Node Exporter.
+Ansible также автоматически добавляет:
+
+* Prometheus datasource;
+* dashboard для Node Exporter.
 
 ---
 
-### test-container-01 и test-container-02
+## test-container-01 и test-container-02
 
 Тестовые контейнеры используются для проверки работы Ansible с несколькими хостами.
 
@@ -139,7 +149,11 @@ Grafana использует Prometheus как источник данных.
 
 Terraform отвечает за создание LXC-контейнеров в Proxmox.
 
-Контейнеры описываются через переменную `containers`.
+Контейнеры описываются через переменную:
+
+```text
+containers
+```
 
 Пример:
 
@@ -176,7 +190,7 @@ web-01
 
 ## Профили ресурсов
 
-Для контейнеров можно использовать готовые профили ресурсов:
+Для контейнеров можно использовать готовые профили:
 
 ```text
 small
@@ -186,10 +200,10 @@ large
 
 Профиль задаёт базовые значения:
 
-- RAM;
-- swap;
-- количество CPU;
-- размер диска.
+* количество CPU;
+* RAM;
+* swap;
+* размер диска.
 
 Например:
 
@@ -197,25 +211,35 @@ large
 profile = "medium"
 ```
 
-При необходимости отдельные параметры контейнера можно изменить вручную.
+При необходимости параметры отдельного контейнера можно переопределить.
 
-Например, контейнер может использовать профиль, но иметь другое количество памяти.
+Например, контейнер может использовать профиль `medium`, но иметь другое количество памяти.
 
-В таком случае настройки контейнера имеют больший приоритет, чем настройки профиля.
+Настройки самого контейнера имеют больший приоритет, чем настройки профиля.
+
+Схема:
+
+```text
+профиль
+   +
+настройки контейнера
+   =
+итоговые параметры
+```
 
 ---
 
 ## Проверка входных данных
 
-В Terraform добавлены проверки некоторых входных параметров.
+В Terraform добавлены проверки некоторых параметров.
 
-Например, проверяются:
+Проверяются:
 
-- количество CPU;
-- минимальное количество RAM;
-- имя профиля;
-- формат размера диска;
-- наличие root-диска, если профиль не используется.
+* количество CPU;
+* минимальное количество RAM;
+* имя профиля;
+* формат размера диска;
+* наличие root-диска, если профиль не используется.
 
 Например, размер диска должен иметь формат:
 
@@ -234,10 +258,7 @@ profile = "medium"
 ```
 
 не проходят проверку.
-[
-      "web",
-      "containers"
-    ]
+
 ---
 
 ## Terraform outputs
@@ -252,11 +273,11 @@ containers_info
 
 Он содержит:
 
-- hostname;
-- IP-адрес;
-- Ansible-группы.
+* hostname;
+* IP-адрес;
+* Ansible-группы.
 
-Например:
+Пример:
 
 ```json
 {
@@ -276,10 +297,9 @@ containers_info
 proxmox_ssh_host
 ```
 
-Он используется Ansible для подключения к контейнерам через Prox[
-      "web",
-      "containers"
-    ]yJump.
+Он используется Ansible для подключения к контейнерам через SSH ProxyJump.
+
+Адрес Proxmox не записан напрямую в Python-скрипте inventory.
 
 ---
 
@@ -310,10 +330,10 @@ grafana
 
 IP-адреса контейнеров не записываются вручную в Ansible inventory.
 
-Вместо этого используется Python-скрипт:
+Для получения информации о контейнерах используется Python-скрипт:
 
 ```text
-dynamic_inventory.py
+ansible/inventory/terraform_inventory.py
 ```
 
 Он выполняет:
@@ -322,7 +342,7 @@ dynamic_inventory.py
 terraform output -json
 ```
 
-и получает информацию о контейнерах из Terraform.
+и получает данные из Terraform.
 
 После этого скрипт формирует inventory для Ansible.
 
@@ -332,16 +352,16 @@ terraform output -json
 Terraform
     │
     ▼
-containers_info
+terraform output -json
     │
     ▼
-dynamic_inventory.py
+terraform_inventory.py
     │
     ▼
 Ansible inventory
 ```
 
-Например, для `web-01` Ansible получает:
+Например, для `web-01` Ansible получает данные примерно такого вида:
 
 ```json
 {
@@ -351,7 +371,7 @@ Ansible inventory
 }
 ```
 
-Таким образом, IP контейнеров не нужно отдельно указывать в Terraform и Ansible.
+Таким образом, IP-адреса контейнеров не нужно отдельно указывать в Terraform и Ansible.
 
 ---
 
@@ -373,7 +393,11 @@ Ansible-controller
 
 Для этого используется SSH ProxyJump.
 
-Адрес Proxmox берётся из Terraform output, а не записан напрямую в Python-скрипте.
+Адрес Proxmox берётся из Terraform output:
+
+```text
+proxmox_ssh_host
+```
 
 ---
 
@@ -381,7 +405,7 @@ Ansible-controller
 
 Node Exporter устанавливается на все контейнеры.
 
-Архив Node Exporter сначала скачивается на Ansible-controller.
+Архив сначала скачивается на Ansible-controller.
 
 После загрузки Ansible проверяет SHA256 checksum архива.
 
@@ -397,9 +421,9 @@ Ansible-controller
 LXC-контейнеры
 ```
 
-Это было сделано потому, что при загрузке архива отдельно с каждого контейнера иногда скачивался повреждённый файл.
+Такой способ был выбран потому, что при загрузке архива отдельно на каждом контейнере иногда скачивался повреждённый файл.
 
-Также роль проверяет установленную версию Node Exporter и выполняет установку только при необходимости.
+Роль также проверяет установленную версию Node Exporter и выполняет установку только при необходимости.
 
 ---
 
@@ -410,11 +434,12 @@ Prometheus устанавливается похожим способом.
 Ansible:
 
 1. скачивает архив на controller;
-2. проверяет checksum;
+2. проверяет SHA256 checksum;
 3. копирует архив на monitoring-контейнер;
 4. распаковывает его;
 5. устанавливает Prometheus;
-6. создаёт systemd service.
+6. создаёт systemd service;
+7. запускает и включает сервис.
 
 Prometheus собирает метрики Node Exporter с контейнеров.
 
@@ -424,12 +449,14 @@ Prometheus собирает метрики Node Exporter с контейнеро
 
 Grafana устанавливается из официального APT-репозитория.
 
-Ключ репозитория хранится внутри Ansible-роли и копируется на контейнер перед добавлением репозитория.
+GPG-ключ репозитория хранится внутри Ansible-роли и копируется на контейнер перед добавлением репозитория.
+
+Это позволяет не скачивать ключ повторно при каждом запуске Ansible.
 
 Ansible также автоматически настраивает:
 
-- Prometheus datasource;
-- Node Exporter dashboard.
+* Prometheus datasource;
+* Node Exporter dashboard.
 
 ---
 
@@ -443,7 +470,7 @@ Notes App — небольшое Flask-приложение для работы 
 ansible/roles/notes_app/files/app/
 ```
 
-Пример структуры:
+Структура:
 
 ```text
 app/
@@ -464,7 +491,7 @@ app/
 notes-app
 ```
 
-Код приложения находится в:
+Файлы приложения копируются в:
 
 ```text
 /opt/notes-app
@@ -475,6 +502,54 @@ Python-зависимости устанавливаются в virtualenv:
 ```text
 /opt/notes-app/venv
 ```
+
+Версии основных Python-зависимостей закреплены в `requirements.txt`:
+
+```text
+Flask==3.1.3
+psycopg2-binary==2.9.13
+python-dotenv==1.2.3
+```
+
+Эти версии были взяты из уже работающего окружения приложения.
+
+---
+
+## Настройки подключения к PostgreSQL
+
+Настройки приложения хранятся в:
+
+```text
+/opt/notes-app/.env
+```
+
+Файл создаётся из Ansible-шаблона:
+
+```text
+ansible/roles/notes_app/templates/env.j2
+```
+
+IP PostgreSQL не записан в шаблоне вручную.
+
+Ansible получает первый хост из группы:
+
+```text
+db
+```
+
+и берёт его `ansible_host`.
+
+После создания файла получается примерно:
+
+```text
+DB_HOST=192.168.100.11
+DB_PORT=5432
+DB_NAME=notes
+DB_USER=notes_user
+DB_PASSWORD=...
+```
+
+Пароль берётся из Ansible Vault.
 
 ---
 
@@ -501,13 +576,36 @@ listen_addresses
 pg_hba.conf
 ```
 
-IP web-сервера берётся из Ansible inventory:
+IP web-сервера берётся из Ansible inventory.
+
+---
+
+## Зависимости Ansible
+
+Проект использует коллекцию:
 
 ```text
-groups['web']
+community.postgresql
 ```
 
-IP базы данных для Notes App также берётся из inventory, а не записывается напрямую в конфигурацию приложения.
+Она указана в:
+
+```text
+ansible/requirements.yml
+```
+
+В проекте используется версия:
+
+```text
+community.postgresql 4.2.0
+```
+
+Перед первым запуском необходимо установить зависимости:
+
+```bash
+cd ansible
+ansible-galaxy collection install -r requirements.yml
+```
 
 ---
 
@@ -518,28 +616,38 @@ IP базы данных для Notes App также берётся из invento
 Файл:
 
 ```text
-secrets.yml
+ansible/secrets.yml
 ```
 
-не добавляется в Git.
+создаётся локально и не хранится в Git.
 
 Создать его можно командой:
 
 ```bash
+cd ansible
 ansible-vault create secrets.yml
 ```
 
 Внутри используется переменная:
 
 ```yaml
-db_user_passwd: "password"
+---
+db_user_passwd: "your-password"
 ```
 
-Для запуска playbook:
+Для запуска playbook можно использовать:
 
 ```bash
 ansible-playbook site.yml --ask-vault-pass
 ```
+
+Также локально можно использовать файл:
+
+```text
+.vault_pass
+```
+
+Он также не добавляется в Git.
 
 ---
 
@@ -550,8 +658,9 @@ ansible-playbook site.yml --ask-vault-pass
 ```text
 .
 ├── ansible/
+│   ├── ansible.cfg
 │   ├── inventory/
-│   │   └── dynamic_inventory.py
+│   │   └── terraform_inventory.py
 │   │
 │   ├── roles/
 │   │   ├── grafana/
@@ -574,10 +683,15 @@ ansible-playbook site.yml --ask-vault-pass
 ├── containers.tf
 ├── locals.tf
 ├── outputs.tf
-├── variables.tf
+├── providers.tf
 ├── terraform.tfvars.example
+├── variables.tf
+├── versions.tf
+├── .terraform.lock.hcl
 └── README.md
 ```
+
+Локальные файлы с паролями, Terraform state и реальные значения переменных в репозиторий не добавляются.
 
 ---
 
@@ -585,20 +699,20 @@ ansible-playbook site.yml --ask-vault-pass
 
 Для запуска проекта нужны:
 
-- Proxmox VE;
-- Terraform;
-- Ansible;
-- Python 3;
-- SSH-доступ к Proxmox;
-- Proxmox API token;
-- LXC template Ubuntu;
-- SSH public key.
+* Proxmox VE;
+* Terraform;
+* Ansible;
+* Python 3;
+* SSH-доступ к Proxmox;
+* Proxmox API token;
+* LXC template Ubuntu;
+* SSH public key.
 
-Также должна быть настроена сеть, через которую LXC-контейнеры смогут работать друг с другом.
+Также должна быть настроена сеть, через которую контейнеры смогут работать друг с другом.
 
 ---
 
-# Подготовка
+# Подготовка Terraform
 
 Клонировать репозиторий:
 
@@ -624,7 +738,11 @@ lxc_passwd         = "..."
 ssh_public_key     = "..."
 ```
 
-Также необходимо указать необходимые контейнеры в `containers`.
+Также необходимо описать контейнеры в переменной:
+
+```text
+containers
+```
 
 ---
 
@@ -648,7 +766,7 @@ terraform fmt
 terraform validate
 ```
 
-Просмотр изменений:
+Просмотр планируемых изменений:
 
 ```bash
 terraform plan
@@ -660,7 +778,7 @@ terraform plan
 terraform apply
 ```
 
-После создания можно посмотреть данные, которые Terraform передаёт Ansible:
+После создания можно посмотреть Terraform outputs:
 
 ```bash
 terraform output
@@ -674,25 +792,31 @@ terraform output -json
 
 ---
 
-# Установка зависимостей Ansible
+# Подготовка Ansible
 
-Проект использует коллекцию:
-
-```text
-community.postgresql
-```
-
-Она указана в:
-
-```text
-ansible/requirements.yml
-```
-
-Установить зависимости:
+Перейти в директорию:
 
 ```bash
 cd ansible
+```
+
+Установить необходимые Ansible collections:
+
+```bash
 ansible-galaxy collection install -r requirements.yml
+```
+
+Создать Vault-файл:
+
+```bash
+ansible-vault create secrets.yml
+```
+
+Добавить пароль пользователя PostgreSQL:
+
+```yaml
+---
+db_user_passwd: "your-password"
 ```
 
 ---
@@ -729,13 +853,7 @@ ping: pong
 
 # Запуск Ansible
 
-После создания контейнеров:
-
-```bash
-cd ansible
-```
-
-Запустить playbook:
+Запустить основной playbook:
 
 ```bash
 ansible-playbook site.yml --ask-vault-pass
@@ -771,22 +889,23 @@ test-container-02
 
 Проект проверялся повторным запуском Ansible.
 
-После первого успешного выполнения:
+После первого успешного выполнения playbook повторный запуск:
 
 ```bash
 ansible-playbook site.yml --ask-vault-pass
 ```
 
-повторный запуск не должен заново изменять уже правильно настроенные сервисы.
+не должен заново изменять уже правильно настроенные сервисы.
 
-На проверенном стенде второй запуск завершался с:
+На проверенном стенде второй запуск завершился без изменений:
 
 ```text
-failed=0
-changed=0
+db-01               changed=0 failed=0
+monitoring-01       changed=0 failed=0
+test-container-01   changed=0 failed=0
+test-container-02   changed=0 failed=0
+web-01              changed=0 failed=0
 ```
-
-на всех контейнерах.
 
 ---
 
@@ -813,14 +932,12 @@ cd ansible
 ansible-playbook site.yml --ask-vault-pass
 ```
 
-После повторного запуска Ansible:
+После повторного запуска Ansible все контейнеры снова завершили выполнение с:
 
 ```text
 failed=0
 changed=0
 ```
-
-Это использовалось для проверки того, что проект можно развернуть заново с нуля.
 
 ---
 
@@ -832,7 +949,7 @@ changed=0
 http://<IP web-01>
 ```
 
-Например:
+Для текущей схемы сети:
 
 ```text
 http://192.168.100.10
@@ -846,7 +963,7 @@ http://192.168.100.10
 http://<IP monitoring-01>:9090
 ```
 
-Например:
+Для текущей схемы сети:
 
 ```text
 http://192.168.100.12:9090
@@ -860,7 +977,7 @@ http://192.168.100.12:9090
 http://<IP monitoring-01>:3000
 ```
 
-Например:
+Для текущей схемы сети:
 
 ```text
 http://192.168.100.12:3000
@@ -868,7 +985,7 @@ http://192.168.100.12:3000
 
 ---
 
-# Секреты
+# Файлы, которые не добавляются в Git
 
 В Git не должны попадать:
 
@@ -876,15 +993,27 @@ http://192.168.100.12:3000
 terraform.tfvars
 terraform.tfstate
 terraform.tfstate.*
-secrets.yml
-.vault_pass
+ansible/secrets.yml
+ansible/.vault_pass
 ```
 
-Terraform API secret и пароли задаются локально.
+Также игнорируются:
 
-Пароль PostgreSQL хранится в Ansible Vault.
+```text
+.terraform/
+__pycache__/
+*.pyc
+```
 
-Terraform state также необходимо считать чувствительным файлом, так как в нём могут находиться значения переменных.
+Пример Terraform-переменных хранится отдельно:
+
+```text
+terraform.tfvars.example
+```
+
+и не содержит реальных секретов.
+
+Terraform state также не хранится в Git, так как он может содержать чувствительные данные.
 
 ---
 
@@ -894,10 +1023,10 @@ Terraform state также необходимо считать чувствит�
 
 Используется:
 
-- один web-контейнер;
-- один контейнер PostgreSQL;
-- один monitoring-контейнер;
-- один сетевой интерфейс на контейнер;
-- Proxmox как SSH jump host.
+* один web-контейнер;
+* один контейнер PostgreSQL;
+* один monitoring-контейнер;
+* один сетевой интерфейс на контейнер;
+* Proxmox как SSH jump host.
 
-Некоторые сетевые параметры зависят от моей схемы сети Proxmox и при запуске на другом стенде должны быть изменены.
+Некоторые сетевые параметры зависят от используемой схемы сети Proxmox и при запуске проекта на другом стенде должны быть изменены.
